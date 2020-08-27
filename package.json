@@ -1,0 +1,14 @@
+{
+  "name": "hcdecryptor",
+  "version": "1.0.0",
+  "description": "Decodification Tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "HCTools Group",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "crypto-js": "^4.0.0"
+  }
+}

@@ -77,6 +77,15 @@ if(fileToDecrypt == "") {
     process.exit();
 }
 console.log("[INFO] - Loaded " + hcKeys.length + " keys.");
+function xorDeobfs(file) {
+    //xor deobfs
+    var deobfs_val = "";
+    for(a = 0, b = 0; a < file.length; a++, b++) {
+        if(b >= xorValues.length) {b = 0}
+        deobfs_val += String.fromCharCode(file.charCodeAt(a) ^ xorValues[b].charCodeAt(0));
+    }
+    return deobfs_val;
+}
 function sha1crypt(data) {
     var outp1 = crypto.createHash("sha1");
     outp1.update(data);
@@ -148,19 +157,13 @@ function parseDecoded(data) {
     }
     return outp1;
 }
-//xor deobfs
-var deobfs_val = "";
-for(a = 0, b = 0; a < fileToDecrypt.length; a++, b++) {
-    if(b >= xorValues.length) {b = 0}
-    deobfs_val += String.fromCharCode(fileToDecrypt.charCodeAt(a) ^ xorValues[b].charCodeAt(0));
-}
 //final decoding
 var decodedData = "";
 var complete = false;
 for(c = 0; c < hcKeys.length; c++) {
     try {
         console.log("[INFO] - Trying to decode with key \"" + hcKeys[c] + "\" (" + (c+1) + "/" + hcKeys.length + ")");
-        decodedData = aesDecrypt(deobfs_val, sha1crypt(hcKeys[c]));
+        decodedData = aesDecrypt(xorDeobfs(fileToDecrypt), sha1crypt(hcKeys[c]));
         complete = true;
     } catch(error) {
         console.log("[ERROR] - Key \"" + hcKeys[c] + "\" invalid.");

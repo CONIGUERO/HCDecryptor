@@ -14,6 +14,7 @@ var keyFile = "";
 var showHelp = false;
 var jsonOutput = false;
 var rawOutput = false;
+var forceDecode2 = false;
 for(c = 0; c < process.argv.length; c++) {
     switch(process.argv[c]) {
         case "--file":
@@ -31,6 +32,10 @@ for(c = 0; c < process.argv.length; c++) {
         case "--raw":
         case "-r":
             rawOutput = true;
+            break;
+        case "--decode2":
+        case "-d2":
+            forceDecode2 = true;
             break;
         case "--help":
         case "-h":
@@ -50,6 +55,7 @@ if(showHelp) {
         "--key, -k\tLoad key file",
         "--json, -j\tFormat output to JSON",
         "--raw , -r\tInclude RAW decoded data",
+        "--decode2, -d2\tForce second decoding stage",
         "--help, -h\tDisplay this help"
     ];
     for(d = 0; d < helpContent.length; d++) {
@@ -97,7 +103,7 @@ function aesDecrypt(data, key) {
     return aesoutp1.toString(CryptoJS.enc.Utf8);
 }
 function aesDecrypt2(data, key) {
-    var aesoutp2 = CryptoJS.AES.decrypt(Buffer.from(data).toString("base64"), CryptoJS.enc.Hex.parse(key), {mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7});
+    var aesoutp2 = CryptoJS.AES.decrypt(Buffer.from(data).toString("base64"), CryptoJS.enc.Hex.parse(key), {mode: CryptoJS.mode.ECB});
     return aesoutp2.toString(CryptoJS.enc.Utf8);
 }
 function parseDecoded(data) {
@@ -163,19 +169,24 @@ function parseDecoded(data) {
 }
 //final decoding
 var decodedData = "";
+var decodedData2 = "";
 var complete = false;
 var completev2 = false;
-for(c = 0; c < hcKeys.length; c++) {
-    try {
-        console.log("[INFO] - Trying to decode with key \"" + hcKeys[c] + "\" (" + (c+1) + "/" + hcKeys.length + ")");
-        decodedData = aesDecrypt(xorDeobfs(fileToDecrypt.toString("utf-8")), sha1crypt(hcKeys[c]));
-        complete = true;
-    } catch(error) {
-        console.log("[ERROR] - Key \"" + hcKeys[c] + "\" invalid.");
-    }
-    if(complete) {
-        console.log("[INFO] - Decoding complete!");
-        break;
+if(!forceDecode2) {
+    for(c = 0; c < hcKeys.length; c++) {
+        try {
+            console.log("[INFO] - Trying to decode with key \"" + hcKeys[c] + "\" (" + (c+1) + "/" + hcKeys.length + ")");
+            decodedData = aesDecrypt(xorDeobfs(fileToDecrypt.toString("utf-8")), sha1crypt(hcKeys[c]));
+            complete = true;
+        } catch(error) {
+            console.log("[ERROR] - Key \"" + hcKeys[c] + "\" invalid.");
+        }
+        if(complete) {
+            console.log("[INFO] - Decoding complete!");
+            //at this point we need to parse the decoded file so we can understand it more nicely
+            console.log(parseDecoded(decodedData));
+            break;
+        }
     }
 }
 if(!complete) {
@@ -183,13 +194,15 @@ if(!complete) {
     for(c = 0; c < hcKeys.length; c++) {
         try {
             console.log("[INFO] - Trying to decode with key \"" + hcKeys[c] + "\" (" + (c+1) + "/" + hcKeys.length + ")");
-            decodedData = aesDecrypt2(fileToDecrypt, sha1crypt(hcKeys[c]));
+            decodedData2 = aesDecrypt2(fileToDecrypt, sha1crypt(hcKeys[c]));
             completev2 = true;
         } catch(error) {
             console.log("[ERROR] - Key \"" + hcKeys[c] + "\" invalid.");
         }
         if(completev2) {
             console.log("[INFO] - Decoding complete!");
+            //at this point we need to parse the decoded file so we can understand it more nicely
+            console.log(parseDecoded(decodedData2));
             break;
         }
     }
@@ -198,5 +211,3 @@ if(!complete) {
         process.exit();
     }
 }
-//at this point we need to parse the decoded file so we can understand it more nicely
-console.log(parseDecoded(decodedData));

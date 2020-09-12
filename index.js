@@ -18,7 +18,7 @@ for(c = 0; c < process.argv.length; c++) {
     switch(process.argv[c]) {
         case "--file":
         case "-f":
-            fileToDecrypt = fs.readFileSync(process.argv[c+1]).toString("utf-8");
+            fileToDecrypt = fs.readFileSync(process.argv[c+1]);
             break;
         case "--keyFile":
         case "-k":
@@ -96,6 +96,10 @@ function aesDecrypt(data, key) {
     var aesoutp1 = CryptoJS.AES.decrypt(data, CryptoJS.enc.Hex.parse(key), {mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7});
     return aesoutp1.toString(CryptoJS.enc.Utf8);
 }
+function aesDecrypt2(data, key) {
+    var aesoutp2 = CryptoJS.AES.decrypt(Buffer.from(data).toString("base64"), CryptoJS.enc.Hex.parse(key), {mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7});
+    return aesoutp2.toString(CryptoJS.enc.Utf8);
+}
 function parseDecoded(data) {
     var st1 = data.split("[splitConfig]");
     var outp1 = "";
@@ -160,10 +164,11 @@ function parseDecoded(data) {
 //final decoding
 var decodedData = "";
 var complete = false;
+var completev2 = false;
 for(c = 0; c < hcKeys.length; c++) {
     try {
         console.log("[INFO] - Trying to decode with key \"" + hcKeys[c] + "\" (" + (c+1) + "/" + hcKeys.length + ")");
-        decodedData = aesDecrypt(xorDeobfs(fileToDecrypt), sha1crypt(hcKeys[c]));
+        decodedData = aesDecrypt(xorDeobfs(fileToDecrypt.toString("utf-8")), sha1crypt(hcKeys[c]));
         complete = true;
     } catch(error) {
         console.log("[ERROR] - Key \"" + hcKeys[c] + "\" invalid.");
@@ -174,8 +179,24 @@ for(c = 0; c < hcKeys.length; c++) {
     }
 }
 if(!complete) {
-    console.log("[ERROR] - Ran out of keys, aborting...");
-    process.exit();
+    console.log("[ERROR] - First decoding stage failed, starting next decoding stage...");
+    for(c = 0; c < hcKeys.length; c++) {
+        try {
+            console.log("[INFO] - Trying to decode with key \"" + hcKeys[c] + "\" (" + (c+1) + "/" + hcKeys.length + ")");
+            decodedData = aesDecrypt2(fileToDecrypt, sha1crypt(hcKeys[c]));
+            completev2 = true;
+        } catch(error) {
+            console.log("[ERROR] - Key \"" + hcKeys[c] + "\" invalid.");
+        }
+        if(completev2) {
+            console.log("[INFO] - Decoding complete!");
+            break;
+        }
+    }
+    if(!completev2) {
+        console.log("[ERROR] - Ran out of keys and decoding methods, aborting...");
+        process.exit();
+    }
 }
 //at this point we need to parse the decoded file so we can understand it more nicely
 console.log(parseDecoded(decodedData));

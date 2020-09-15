@@ -104,7 +104,7 @@ function aesDecrypt(data, key) {
 }
 function aesDecrypt2(data, key) {
     var b64_reencoded = Buffer.from(data).toString("base64");
-    var aesoutp2 = CryptoJS.AES.decrypt(b64_reencoded.toString(), CryptoJS.enc.Hex.parse(key), {mode: CryptoJS.mode.ECB});
+    var aesoutp2 = CryptoJS.AES.decrypt(Buffer.from(data), CryptoJS.enc.Hex.parse(key), {mode: CryptoJS.mode.ECB});
     return aesoutp2.toString(CryptoJS.enc.Utf8);
 }
 function parseDecoded(data) {

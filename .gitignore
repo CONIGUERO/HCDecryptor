@@ -1,3 +1,4 @@
 node_modules/
 no_deploy/
+test.js
 package-lock.json

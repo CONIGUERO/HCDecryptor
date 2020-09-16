@@ -1,5 +1,5 @@
 /*
-* HCDecryptor v1.0.0
+* HCDecryptor v1.0.2
 * Copyright (c) HCTools Group - 2020
 * Ported to Javascript by P7COMunications LLC
 *
@@ -46,7 +46,7 @@ for(c = 0; c < process.argv.length; c++) {
 var hcKeys = [];
 const xorValues = ['。', '〃', '〄', '々', '〆', '〇', '〈', '〉', '《', '》', '「', '」', '『', '』', '【', '】', '〒', '〓', '〔', '〕'];
 //splash
-console.log("HCDecryptor v1.0.0\r\nCopyright (c) HCTools Group - 2020\r\nPorted to Javascript by P7COMunications LLC");
+console.log("HCDecryptor v1.0.2\r\nCopyright (c) HCTools Group - 2020\r\nPorted to Javascript by P7COMunications LLC");
 if(showHelp) {
     const helpContent = [
         "Usage: node script.js [--args, -a...]",

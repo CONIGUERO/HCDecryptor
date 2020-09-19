@@ -5,7 +5,7 @@
 * Ported to Javascript by P7COMunications LLC
 *
 * License: GPL-V3
-* This program comes with a LICENSE file that you must read if you want to modify or redistribute this file.
+* This program comes with a LICENSE file that you must read if you want to modify or redistribute it.
 */
 const CryptoJS = require('crypto-js');
 const crypto = require('crypto');

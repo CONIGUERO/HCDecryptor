@@ -1,4 +1,7 @@
 node_modules/
 no_deploy/
+no_deploy2/
+build/
+debstage/
 test.js
 package-lock.json

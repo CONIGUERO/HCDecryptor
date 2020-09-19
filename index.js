@@ -1,5 +1,6 @@
+#!/usr/bin/node
 /*
-* HCDecryptor v1.0.2
+* HCDecryptor v1.0.4
 * Copyright (c) HCTools Group - 2020
 * Ported to Javascript by P7COMunications LLC
 *
@@ -15,6 +16,8 @@ var showHelp = false;
 var jsonOutput = false;
 var rawOutput = false;
 var forceDecode2 = false;
+var forceDecode3 = false;
+var useDefaultKeyFile = true;
 for(c = 0; c < process.argv.length; c++) {
     switch(process.argv[c]) {
         case "--file":
@@ -23,6 +26,7 @@ for(c = 0; c < process.argv.length; c++) {
             break;
         case "--keyFile":
         case "-k":
+            useDefaultKeyFile = false;
             keyFile = fs.readFileSync(process.argv[c+1]).toString();
             break;
         case "--json":
@@ -37,6 +41,10 @@ for(c = 0; c < process.argv.length; c++) {
         case "-d2":
             forceDecode2 = true;
             break;
+        case "--decode3":
+        case "-d3":
+            forceDecode3 = true;
+            break;
         case "--help":
         case "-h":
             showHelp = true;
@@ -46,7 +54,7 @@ for(c = 0; c < process.argv.length; c++) {
 var hcKeys = [];
 const xorValues = ['。', '〃', '〄', '々', '〆', '〇', '〈', '〉', '《', '》', '「', '」', '『', '』', '【', '】', '〒', '〓', '〔', '〕'];
 //splash
-console.log("HCDecryptor v1.0.2\r\nCopyright (c) HCTools Group - 2020\r\nPorted to Javascript by P7COMunications LLC");
+console.log("HCDecryptor v1.0.4\r\nCopyright (c) HCTools Group - 2020\r\nPorted to Javascript by P7COMunications LLC");
 if(showHelp) {
     const helpContent = [
         "Usage: node script.js [--args, -a...]",
@@ -56,12 +64,26 @@ if(showHelp) {
         "--json, -j\tFormat output to JSON",
         "--raw , -r\tInclude RAW decoded data",
         "--decode2, -d2\tForce second decoding stage",
+        "--decode3, -d3\tForce third decoding stage",
         "--help, -h\tDisplay this help"
     ];
     for(d = 0; d < helpContent.length; d++) {
         console.log(helpContent[d]);
     }
     process.exit();
+}
+/*
+* Automatic key loading (basically load keys.dat if found or something)
+*/
+if(useDefaultKeyFile) {
+    var defKeyArr = fs.readFileSync(__dirname + "/keys.dat").toString().split("\n");
+    for(e = 0; e < defKeyArr.length; e++) {
+        if(defKeyArr[e].indexOf("\r") != -1) {
+            hcKeys.push(defKeyArr[e].substring(0, defKeyArr[e].length-1));
+        } else {
+            hcKeys.push(defKeyArr[e]);
+        }
+    }
 }
 if(fileToDecrypt == "") {
     console.log("[ERROR] - No file loaded.");
@@ -172,6 +194,29 @@ var decodedData = "";
 var decodedData2 = "";
 var complete = false;
 var completev2 = false;
+var completev3 = false;
+// [19/09/2020] - TODO: Improve this fucking spaghetti-if hell section
+if(forceDecode3) {
+    for(c = 0; c < hcKeys.length; c++) {
+        try {
+            console.log("[INFO] - Trying to decode with key \"" + hcKeys[c] + "\" (" + (c+1) + "/" + hcKeys.length + ")");
+            decodedData = aesDecrypt2(fileToDecrypt, sha1crypt(hcKeys[c]));
+            if(decodedData.length > 2) {
+                completev3 = true;
+            } else {
+                throw "False UTF8";
+            }
+        } catch(error) {
+            console.log("[ERROR] - Key \"" + hcKeys[c] + "\" invalid.");
+        }
+        if(completev3) {
+            console.log("[INFO] - Decoding complete!");
+            //at this point we need to parse the decoded file so we can understand it more nicely
+            console.log(parseDecoded(decodedData));
+            process.exit();
+        }
+    }
+}
 if(!forceDecode2) {
     for(c = 0; c < hcKeys.length; c++) {
         try {
@@ -207,7 +252,30 @@ if(!complete) {
         }
     }
     if(!completev2) {
-        console.log("[ERROR] - Ran out of keys and decoding methods, aborting...");
-        process.exit();
+        //console.log("[ERROR] - Ran out of keys and decoding methods, aborting...");
+        //process.exit();
+        for(c = 0; c < hcKeys.length; c++) {
+            try {
+                console.log("[INFO] - Trying to decode with key \"" + hcKeys[c] + "\" (" + (c+1) + "/" + hcKeys.length + ")");
+                decodedData = aesDecrypt2(fileToDecrypt, sha1crypt(hcKeys[c]));
+                if(decodedData.length > 2) {
+                    completev3 = true;
+                } else {
+                    throw "False UTF8";
+                }
+            } catch(error) {
+                console.log("[ERROR] - Key \"" + hcKeys[c] + "\" invalid.");
+            }
+            if(completev3) {
+                console.log("[INFO] - Decoding complete!");
+                //at this point we need to parse the decoded file so we can understand it more nicely
+                console.log(parseDecoded(decodedData));
+                process.exit();
+            }
+        }
+        if(!completev3) {
+            console.log("[ERROR] - Ran out of keys and decoding methods, aborting...");
+            process.exit();
+        }
     }
 }

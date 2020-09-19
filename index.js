@@ -222,7 +222,11 @@ if(!forceDecode2) {
         try {
             console.log("[INFO] - Trying to decode with key \"" + hcKeys[c] + "\" (" + (c+1) + "/" + hcKeys.length + ")");
             decodedData = aesDecrypt(xorDeobfs(fileToDecrypt.toString("utf-8")), sha1crypt(hcKeys[c]));
-            complete = true;
+            if(decodedData.length > 2) {
+                complete = true;
+            } else {
+                throw "False UTF8 response"
+            }
         } catch(error) {
             console.log("[ERROR] - Key \"" + hcKeys[c] + "\" invalid.");
         }
@@ -240,7 +244,11 @@ if(!complete) {
         try {
             console.log("[INFO] - Trying to decode with key \"" + hcKeys[c] + "\" (" + (c+1) + "/" + hcKeys.length + ")");
             decodedData2 = aesDecrypt2(fileToDecrypt, sha1crypt(hcKeys[c]));
-            completev2 = true;
+            if(decodedData2.length > 2) {
+                completev2 = true;
+            } else {
+                throw "False UTF8 response"
+            }
         } catch(error) {
             console.log("[ERROR] - Key \"" + hcKeys[c] + "\" invalid.");
         }
@@ -252,30 +260,7 @@ if(!complete) {
         }
     }
     if(!completev2) {
-        //console.log("[ERROR] - Ran out of keys and decoding methods, aborting...");
-        //process.exit();
-        for(c = 0; c < hcKeys.length; c++) {
-            try {
-                console.log("[INFO] - Trying to decode with key \"" + hcKeys[c] + "\" (" + (c+1) + "/" + hcKeys.length + ")");
-                decodedData = aesDecrypt2(fileToDecrypt, sha1crypt(hcKeys[c]));
-                if(decodedData.length > 2) {
-                    completev3 = true;
-                } else {
-                    throw "False UTF8";
-                }
-            } catch(error) {
-                console.log("[ERROR] - Key \"" + hcKeys[c] + "\" invalid.");
-            }
-            if(completev3) {
-                console.log("[INFO] - Decoding complete!");
-                //at this point we need to parse the decoded file so we can understand it more nicely
-                console.log(parseDecoded(decodedData));
-                process.exit();
-            }
-        }
-        if(!completev3) {
-            console.log("[ERROR] - Ran out of keys and decoding methods, aborting...");
-            process.exit();
-        }
+        console.log("[ERROR] - Ran out of keys and decoding methods, aborting...");
+        process.exit();
     }
 }
